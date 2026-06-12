@@ -1,0 +1,14 @@
+dist/
+build/
+__pycache__/
+
+*.exe
+*.pkg
+*.mp4
+*.dll
+*.pyd
+*.pyz
+
+.venv/
+venv/
+.env
