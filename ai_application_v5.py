@@ -27,6 +27,7 @@ from duval_triangle_v7 import classify_duval
 import os
 
 api_key = os.getenv("GROQ_API_KEY")
+
 # IEC / IS limits for each gas (µl/l)
 GAS_LIMITS = {
     "h2":   {"name": "Hydrogen",        "symbol": "H₂",    "unit": "µl/l", "caution": 100,  "limit": 700,  "color": "#4FC3F7"},

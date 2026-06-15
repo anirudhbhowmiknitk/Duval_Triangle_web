@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Transformer Oil — Water Content Analyser</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0f19;--bg2:#111827;--bg3:#1a2332;--bg4:#1e2d42;
+  --border:#1e3a5f;--border2:#2d4a6a;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --blue:#3b82f6;--blue2:#1d4ed8;--cyan:#22d3ee;
+  --green:#22c55e;--green2:#15803d;
+  --red:#ef4444;--red2:#991b1b;
+  --amber:#f59e0b;--amber2:#92400e;
+  --card-shadow:0 4px 24px rgba(0,0,0,0.4);
+  --radius:14px;
+}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;line-height:1.6;}
+
+/* ── Layout ── */
+.page{max-width:1280px;margin:0 auto;padding:0 24px 80px;}
+
+/* ── Hero ── */
+.hero{
+  background:linear-gradient(135deg,#060d1a 0%,#0a1929 35%,#0d3b6e 70%,#1565c0 100%);
+  border-radius:20px;padding:2.2rem 2.8rem 2rem;margin:28px 0 28px;
+  box-shadow:0 8px 40px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.06);
+  position:relative;overflow:hidden;
+}
+.hero::after{content:'';position:absolute;top:-60px;right:-60px;width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(21,101,192,0.25) 0%,transparent 70%);pointer-events:none;}
+.hero h1{font-size:2rem;font-weight:900;letter-spacing:-.03em;color:#e3f2fd;margin-bottom:.3rem;}
+.hero-sub{color:#90caf9;font-size:.9rem;margin-bottom:1rem;}
+.badges{display:flex;flex-wrap:wrap;gap:.4rem;}
+.badge{display:inline-block;background:rgba(79,195,247,.12);border:1px solid rgba(79,195,247,.28);
+  border-radius:20px;padding:.2rem .8rem;font-size:.7rem;font-weight:600;color:#4fc3f7;letter-spacing:.05em;}
+
+/* ── Upload zone ── */
+.upload-section{display:flex;flex-direction:column;gap:16px;margin-bottom:28px;}
+.upload-zone{
+  border:2px dashed var(--border2);border-radius:var(--radius);
+  padding:3rem 2rem;text-align:center;cursor:pointer;
+  background:linear-gradient(135deg,#111827,#0f1c2e);
+  transition:all .25s ease;position:relative;
+}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--cyan);background:rgba(34,211,238,.04);}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:3rem;margin-bottom:.8rem;display:block;}
+.upload-title{font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:.35rem;}
+.upload-sub{font-size:.82rem;color:var(--text3);}
+
+/* ── Config bar ── */
+.config-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.config-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px;}
+.config-group label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);}
+.config-group input,.config-group select{
+  background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  padding:.5rem .8rem;color:var(--text);font-family:inherit;font-size:.85rem;
+  outline:none;transition:border-color .2s;
+}
+.config-group input:focus,.config-group select:focus{border-color:var(--cyan);}
+.btn-analyse{
+  background:linear-gradient(135deg,var(--blue2),var(--blue));
+  border:none;border-radius:10px;padding:.7rem 1.6rem;
+  color:#fff;font-weight:700;font-size:.9rem;cursor:pointer;
+  box-shadow:0 4px 16px rgba(59,130,246,0.3);
+  transition:all .2s;white-space:nowrap;margin-top:16px;
+}
+.btn-analyse:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(59,130,246,0.4);}
+.btn-analyse:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+/* ── Progress ── */
+.progress-wrap{display:none;margin-bottom:20px;}
+.progress-bar-bg{background:var(--bg3);border-radius:50px;height:8px;overflow:hidden;}
+.progress-bar-fill{height:100%;border-radius:50px;background:linear-gradient(90deg,var(--blue2),var(--cyan));width:0%;transition:width .3s;}
+.progress-label{font-size:.78rem;color:var(--text3);margin-top:.4rem;}
+
+/* ── Summary cards ── */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:28px;}
+.scard{
+  border-radius:var(--radius);padding:1.2rem 1.1rem;text-align:center;
+  border:1px solid var(--border);position:relative;overflow:hidden;
+}
+.scard::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;}
+.scard-num{font-size:2.6rem;font-weight:900;letter-spacing:-.04em;line-height:1;}
+.scard-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-top:.4rem;opacity:.7;}
+.sc-total{background:linear-gradient(135deg,#1a237e22,#28359322);border-color:#3f51b533;}
+.sc-total::after{background:#3f51b5;}.sc-total .scard-num{color:#7986cb;}
+.sc-bad{background:linear-gradient(135deg,#b71c1c22,#c6282822);border-color:#ef444433;}
+.sc-bad::after{background:#ef4444;}.sc-bad .scard-num{color:#f87171;}
+.sc-good{background:linear-gradient(135deg,#1b5e2022,#1e7e2022);border-color:#22c55e33;}
+.sc-good::after{background:#22c55e;}.sc-good .scard-num{color:#4ade80;}
+.sc-nd{background:var(--bg3);border-color:var(--border);}
+.sc-nd::after{background:#64748b;}.sc-nd .scard-num{color:#94a3b8;}
+
+/* ── Tier headers ── */
+.tier-hdr{
+  border-radius:12px;padding:.9rem 1.4rem;margin:20px 0 10px;
+  font-weight:800;font-size:1rem;display:flex;align-items:center;gap:.6rem;
+  box-shadow:0 4px 16px rgba(0,0,0,0.2);
+}
+.tier-bad{background:linear-gradient(90deg,#450a0a,#991b1b,#dc2626);}
+.tier-good{background:linear-gradient(90deg,#052e16,#15803d,#16a34a);}
+.tier-nd{background:linear-gradient(90deg,#1e293b,#334155,#475569);}
+.tier-count{background:rgba(255,255,255,.2);border-radius:20px;padding:.1rem .65rem;font-size:.78rem;margin-left:auto;}
+
+/* ── Report card ── */
+.report-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);margin-bottom:14px;overflow:hidden;
+  box-shadow:var(--card-shadow);
+}
+.card-header{
+  display:flex;align-items:center;gap:.8rem;padding:1rem 1.4rem;
+  cursor:pointer;user-select:none;
+  border-bottom:1px solid transparent;transition:background .2s;
+}
+.card-header:hover{background:rgba(255,255,255,.03);}
+.card-header.open{border-bottom-color:var(--border);}
+.ch-icon{font-size:1.1rem;flex-shrink:0;}
+.ch-equip{font-weight:700;font-size:.95rem;color:var(--text);flex:1;}
+.ch-meta{font-size:.75rem;color:var(--text3);margin-top:.1rem;}
+.ch-ppm{font-size:1.3rem;font-weight:900;letter-spacing:-.02em;margin-left:.5rem;white-space:nowrap;}
+.ch-arrow{color:var(--text3);font-size:.8rem;transition:transform .25s;flex-shrink:0;}
+.ch-arrow.open{transform:rotate(180deg);}
+.card-body{display:none;padding:1.4rem;}
+.card-body.open{display:block;}
+
+/* ── Verdict strip ── */
+.verdict-strip{
+  border-radius:10px;padding:1rem 1.3rem;margin-bottom:1.1rem;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  flex-wrap:wrap;
+}
+.vs-bad{background:linear-gradient(90deg,rgba(153,27,27,.15),rgba(239,68,68,.05));
+  border-left:5px solid #ef4444;}
+.vs-good{background:linear-gradient(90deg,rgba(21,128,61,.15),rgba(34,197,94,.05));
+  border-left:5px solid #22c55e;}
+.vs-nd{background:rgba(100,116,139,.1);border-left:5px solid #64748b;}
+.vs-big{font-size:2rem;font-weight:900;letter-spacing:-.03em;line-height:1;}
+.vs-bad .vs-big{color:#f87171;}
+.vs-good .vs-big{color:#4ade80;}
+.vs-unit{font-size:.85rem;font-weight:500;color:var(--text3);margin-left:.3rem;}
+.vs-sub{font-size:.75rem;color:var(--text3);margin-top:.25rem;}
+.vs-verdict{text-align:right;}
+.vs-code{font-size:1rem;font-weight:800;}
+.vs-bad .vs-code{color:#f87171;}
+.vs-good .vs-code{color:#4ade80;}
+.vs-trufil{font-size:.72rem;color:var(--text3);margin-top:.2rem;}
+
+/* ── Water bar ── */
+.wbar-wrap{margin:.2rem 0 1.2rem;}
+.wbar-labels{display:flex;justify-content:space-between;font-size:.72rem;color:var(--text3);margin-bottom:.3rem;}
+.wbar-track{background:rgba(255,255,255,.08);border-radius:50px;height:14px;overflow:hidden;position:relative;}
+.wbar-fill{height:100%;border-radius:50px;transition:width .8s cubic-bezier(.4,0,.2,1);}
+.wbar-pct{font-size:.72rem;color:var(--text3);margin-top:.3rem;text-align:right;}
+
+/* ── Analysis box ── */
+.analysis-box{
+  border-radius:10px;padding:.9rem 1.2rem;margin-bottom:1.1rem;
+  font-size:.85rem;line-height:1.75;
+}
+.ab-bad{background:rgba(153,27,27,.12);border-left:4px solid #ef4444;color:#fca5a5;}
+.ab-bad strong{color:#fecaca;}
+.ab-good{background:rgba(21,128,61,.12);border-left:4px solid #22c55e;color:#86efac;}
+.ab-good strong{color:#bbf7d0;}
+.ab-nd{background:rgba(100,116,139,.1);border-left:4px solid #64748b;color:#94a3b8;}
+
+/* ── Section label ── */
+.slabel{
+  font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+  color:var(--text3);margin:1.3rem 0 .6rem;padding-bottom:.4rem;
+  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.4rem;
+}
+
+/* ── Gas grid ── */
+.gas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;}
+.gas-card{
+  background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:.8rem 1rem;position:relative;overflow:hidden;
+}
+.gas-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:4px;border-radius:4px 0 0 4px;}
+.gc-ok::before{background:var(--green);}
+.gc-warn::before{background:var(--amber);}
+.gc-bad::before{background:var(--red);}
+.gc-na::before{background:#475569;}
+.gas-name{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:.2rem;}
+.gas-row{display:flex;align-items:baseline;gap:.4rem;margin-bottom:.5rem;}
+.gas-val{font-size:1.4rem;font-weight:800;letter-spacing:-.02em;line-height:1;}
+.gc-ok .gas-val{color:var(--green);}
+.gc-warn .gas-val{color:var(--amber);}
+.gc-bad .gas-val{color:var(--red);}
+.gc-na .gas-val{color:#64748b;}
+.gas-unit{font-size:.68rem;color:var(--text3);font-weight:500;}
+.gas-limit{font-size:.65rem;color:var(--text3);margin-left:auto;}
+.gas-bar-track{background:rgba(255,255,255,.08);border-radius:50px;height:6px;overflow:hidden;}
+.gas-bar-fill{height:100%;border-radius:50px;}
+
+/* ── TDCG pill ── */
+.tdcg-pill{
+  display:inline-flex;align-items:center;gap:.7rem;
+  background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:.55rem 1.1rem;margin-top:.7rem;font-size:.82rem;
+}
+.tdcg-val{font-size:1.1rem;font-weight:800;}
+.tdcg-ref{font-size:.68rem;color:var(--text3);}
+
+/* ── Extra tests ── */
+.extra-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;margin-top:.4rem;}
+.ecell{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.65rem .9rem;}
+.ecell-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:.2rem;}
+.ecell-val{font-size:1.05rem;font-weight:700;}
+.ecell-unit{font-size:.65rem;color:var(--text3);font-weight:400;}
+.ecell-sub{font-size:.63rem;color:var(--text3);margin-top:.15rem;}
+.ec-ok .ecell-val{color:var(--green);}
+.ec-bad .ecell-val{color:var(--red);}
+.ec-na .ecell-val{color:#64748b;}
+
+/* ── Two col ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:.4rem;}
+.info-pill{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.7rem .9rem;}
+.ip-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:.25rem;}
+.ip-val{font-size:.9rem;font-weight:700;color:var(--text);}
+.ip-sub{font-size:.7rem;color:var(--text3);margin-top:.15rem;}
+
+/* ── Meta grid ── */
+.meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:.4rem;}
+.mcell{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.6rem .85rem;}
+.mcell-lbl{font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);margin-bottom:3px;}
+.mcell-val{font-size:.8rem;font-weight:600;color:var(--text);word-break:break-word;}
+.span2{grid-column:span 2;}
+.span4{grid-column:span 4;}
+
+/* ── AI panel ── */
+.ai-panel{
+  background:linear-gradient(135deg,#060e1c,#0d1b2e);
+  border:1px solid var(--border2);border-left:4px solid var(--cyan);
+  border-radius:12px;padding:1.1rem 1.4rem;margin-top:1.1rem;
+  box-shadow:0 4px 20px rgba(0,0,0,.25);
+}
+.ai-hdr{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+  color:var(--cyan);margin-bottom:.7rem;padding-bottom:.45rem;
+  border-bottom:1px solid var(--border2);}
+.ai-body{font-size:.85rem;line-height:1.8;color:#b0c4d8;}
+.ai-body strong{color:#e3f2fd;}
+.ai-hint{background:#060e1c;border:1px dashed var(--border2);border-radius:8px;
+  padding:.6rem 1rem;font-size:.75rem;color:#4a7a9b;margin-top:.9rem;text-align:center;}
+.ai-loading{font-size:.82rem;color:var(--cyan);font-style:italic;padding:.5rem 0;}
+
+/* ── Reference box ── */
+.ref-box{
+  background:linear-gradient(135deg,rgba(13,59,110,.2),rgba(21,101,192,.1));
+  border:1px solid var(--border2);border-left:5px solid var(--blue);
+  border-radius:12px;padding:1.2rem 1.6rem;margin-top:2rem;
+}
+.ref-title{font-size:.82rem;font-weight:800;color:#93c5fd;text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:.8rem;}
+.ref-row{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:.3rem;font-size:.8rem;color:var(--text2);}
+.ref-lbl{min-width:90px;font-weight:600;color:var(--text3);}
+.ref-dga{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:5px;
+  font-size:.73rem;color:var(--text2);margin-top:.7rem;padding-top:.7rem;border-top:1px solid var(--border);}
+.ref-note{font-size:.7rem;color:var(--text3);margin-top:.8rem;}
+
+/* ── Empty / loading states ── */
+#results{display:none;}
+#empty-state{text-align:center;padding:4rem 2rem;color:var(--text3);}
+.empty-icon{font-size:4rem;margin-bottom:1rem;opacity:.5;}
+.empty-title{font-size:1.05rem;font-weight:700;color:var(--text2);margin-bottom:.4rem;}
+.empty-sub{font-size:.82rem;line-height:1.6;}
+
+/* ── File list ── */
+.file-list{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+.file-item{
+  background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  padding:.5rem .9rem;display:flex;align-items:center;gap:.6rem;font-size:.82rem;
+}
+.file-item-name{flex:1;font-weight:500;color:var(--text);}
+.file-item-size{color:var(--text3);font-size:.72rem;}
+.file-remove{background:none;border:none;color:var(--text3);cursor:pointer;font-size:1rem;
+  padding:.1rem .3rem;border-radius:4px;transition:color .2s;}
+.file-remove:hover{color:var(--red);}
+.btn-clear{
+  background:none;border:1px solid var(--border);border-radius:8px;
+  padding:.4rem .9rem;color:var(--text3);font-size:.78rem;cursor:pointer;
+  transition:all .2s;margin-top:8px;
+}
+.btn-clear:hover{border-color:var(--red);color:var(--red);}
+
+/* ── Responsive ── */
+@media(max-width:700px){
+  .hero{padding:1.4rem 1.2rem;}
+  .hero h1{font-size:1.4rem;}
+  .meta-grid{grid-template-columns:repeat(2,1fr);}
+  .two-col{grid-template-columns:1fr;}
+  .gas-grid{grid-template-columns:1fr 1fr;}
+  .span2,.span4{grid-column:span 2;}
+  .ch-ppm{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- Hero -->
+<div class="hero">
+  <h1>💧 Transformer Oil Analyser</h1>
+  <p class="hero-sub">Water Content · DGA · Physical Tests · IS 1866:2017 / IEC 60422</p>
+  <div class="badges">
+    <span class="badge">Karl Fischer</span>
+    <span class="badge">IS 13567 / ASTM D1533 / IEC 60814</span>
+    <span class="badge">TRU-FIL · SGS · CPRI</span>
+    <span class="badge">IEEE C57.104 / IS 9434</span>
+    <span class="badge">40 ppm Limit</span>
+  </div>
+</div>
+
+<!-- Upload & Config -->
+<div class="upload-section">
+  <div class="upload-zone" id="dropzone">
+    <input type="file" id="fileInput" multiple accept=".pdf"/>
+    <span class="upload-icon">📂</span>
+    <div class="upload-title">Drop PDFs here or click to browse</div>
+    <div class="upload-sub">TRU-FIL · SGS · CPRI formats · Multiple files supported</div>
+  </div>
+
+  <div id="file-list" class="file-list" style="display:none;"></div>
+
+  <div class="config-bar">
+    <div class="config-group">
+      <label>🤖 Groq API Key (optional — for AI analysis)</label>
+      <input type="password" id="groqKey" placeholder="gsk_... (leave blank to skip AI)"/>
+    </div>
+    <button class="btn-analyse" id="analyseBtn" onclick="runAnalysis()" disabled>
+      ⚡ Analyse PDFs
+    </button>
+  </div>
+  <button class="btn-clear" id="clearBtn" onclick="clearAll()" style="display:none;">✕ Clear all files</button>
+</div>
+
+<!-- Progress -->
+<div class="progress-wrap" id="progressWrap">
+  <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+  <div class="progress-label" id="progressLabel">Processing…</div>
+</div>
+
+<!-- Empty state -->
+<div id="empty-state">
+  <div class="empty-icon">⚡</div>
+  <div class="empty-title">Upload transformer oil test report PDFs to begin</div>
+  <div class="empty-sub">Water content, DGA gases, BDV, IFT and more are extracted automatically.<br/>
+  No server required — everything runs in your browser.</div>
+</div>
+
+<!-- Results -->
+<div id="results"></div>
+
+</div><!-- /page -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// PDF.js setup
+// ═══════════════════════════════════════════════════════════════════
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ═══════════════════════════════════════════════════════════════════
+// File management
+// ═══════════════════════════════════════════════════════════════════
+let files = [];
+
+const dropzone  = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const fileListEl = document.getElementById('file-list');
+const analyseBtn = document.getElementById('analyseBtn');
+const clearBtn   = document.getElementById('clearBtn');
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault(); dropzone.classList.remove('drag');
+  addFiles([...e.dataTransfer.files].filter(f => f.name.endsWith('.pdf')));
+});
+fileInput.addEventListener('change', e => {
+  addFiles([...e.target.files]);
+  fileInput.value = '';
+});
+
+function addFiles(newFiles) {
+  newFiles.forEach(f => {
+    if (!files.find(x => x.name === f.name && x.size === f.size)) files.push(f);
+  });
+  renderFileList();
+}
+
+function removeFile(idx) {
+  files.splice(idx, 1);
+  renderFileList();
+}
+
+function clearAll() {
+  files = [];
+  renderFileList();
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'block';
+}
+
+function renderFileList() {
+  analyseBtn.disabled = files.length === 0;
+  clearBtn.style.display = files.length > 0 ? 'block' : 'none';
+  fileListEl.style.display = files.length > 0 ? 'flex' : 'none';
+  fileListEl.innerHTML = files.map((f, i) => `
+    <div class="file-item">
+      <span>📄</span>
+      <span class="file-item-name">${esc(f.name)}</span>
+      <span class="file-item-size">${(f.size/1024).toFixed(0)} KB</span>
+      <button class="file-remove" onclick="removeFile(${i})" title="Remove">✕</button>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PDF text extraction via PDF.js
+// ═══════════════════════════════════════════════════════════════════
+async function extractPdfText(file) {
+  const ab  = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+  const pages = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page    = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    // Reconstruct lines preserving approximate row structure
+    const items = content.items;
+    let lines = [];
+    let curY = null, curLine = '';
+    for (const item of items) {
+      const y = Math.round(item.transform[5]);
+      if (curY === null) curY = y;
+      if (Math.abs(y - curY) > 3) {
+        if (curLine.trim()) lines.push(curLine.trim());
+        curLine = item.str;
+        curY = y;
+      } else {
+        curLine += (curLine && item.str ? '  ' : '') + item.str;
+      }
+    }
+    if (curLine.trim()) lines.push(curLine.trim());
+    pages.push(lines.join('\n'));
+  }
+  return pages.join('\n');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Extraction — ported from Python
+// ═══════════════════════════════════════════════════════════════════
+const STD = '(?:IS\\s+\\d+|ASTM\\s+D\\s*\\d+|IEC\\s+\\d+)';
+
+const RX = {
+  FULL:   new RegExp('Water\\s+Content\\s+By\\s+Karl\\s+Fischer' +
+    '[\\s\\S]*?' + STD + '\\s+' +
+    '(\\d+(?:\\.\\d+)?)' + '[\\s\\S]*?' +
+    '(\\d+(?:\\.\\d+)?)\\s*Max\\s+' +
+    '(Acceptable|Not Acceptable|Not Specified|NS)', 'i'),
+  PRIMARY: new RegExp('Water\\s+Content\\s+By\\s+Karl\\s+Fischer' +
+    '[\\s\\S]*?' + STD + '\\s+(\\d+(?:\\.\\d+)?)', 'i'),
+  SPLIT:  new RegExp('Water\\s+Content\\s+By\\s+Karl\\s+Fischer\\s*\\n+\\s*Method' +
+    '[\\s\\S]*?(\\d+(?:\\.\\d+)?)', 'i'),
+  NO_STD: new RegExp('Water\\s+Content\\s+By\\s+Karl\\s+Fischer(?:\\s+Method)?' +
+    '\\s+mg/KG\\s*\\(ppm\\)\\s+(\\d+(?:\\.\\d+)?)\\s+(\\d+(?:\\.\\d+)?)\\s*Max\\s+' +
+    '(Acceptable|Not Acceptable|Not Specified|NS)', 'i'),
+
+  EQUIP:   /Equipment\s+Designation\s+(.+?)(?:\n|Owner)/i,
+  VOLTAGE: /Voltage\s+Class\s+(\d+(?:\.\d+)?)\s*KV/i,
+  RATING:  /\bRating\s+(\d[\d,.]*\s*KVA)/i,
+  REPORT:  /Oil\s+Test\s+Report\s*[-\u2013]\s*([\w/]+)/i,
+  DATE:    /Report\s+Date\s+(\d{2}-\d{2}-\d{4})/i,
+  POINT:   /Sampling\s+Point\s+(.+?)(?:\n)/i,
+  FLUID:   /Insulating\s+Fluid\s+(.+?)(?:\n)/i,
+  LIMSTD:  /(IEEE\s+C57\.\d+|IS\s+1866|IEC\s+60422)/i,
+  OWNER:   /Owner\s+(.+?)(?:\n|Equipment)/i,
+  LOCATION:/(?:Location|Station|Substation|Site)\s*[:\-]?\s*(.+?)(?:\n)/i,
+  TDCG:    /Total\s+Dissolved\s+Combustible\s+Gas[\s\S]*?(\d+(?:\.\d+)?)/i,
+  BDV:     /Break\s*(?:down)?\s*Voltage[\s\S]*?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*Min/i,
+  IFT:     /Interfacial\s+Tension[\s\S]*?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*Min/i,
+  DDF:     /Dielectric\s+Dissipation\s+Factor[\s\S]*?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*Max/i,
+  ACIDITY: /Acidity[\s\S]*?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*Max/i,
+};
+
+const GAS_LABELS = {
+  H2:'Hydrogen', CH4:'Methane', C2H2:'Acetylene',
+  C2H4:'Ethylene', C2H6:'Ethane', CO:'Carbon Monoxide',
+  CO2:'Carbon Dioxide', O2:'Oxygen', N2:'Nitrogen',
+};
+const GAS_LIMITS = {
+  H2:100, CH4:120, C2H2:35, C2H4:50,
+  C2H6:65, CO:350, CO2:2500, O2:19000, N2:71000,
+};
+const GAS_RX = {
+  H2:  /Hydrogen\s*\(?H2\)?[\s\S]*?(?:IS\s+\d+|ASTM\s+D\s*\d+|IEC\s+\d+|ppm\s+v\/v)[\s\S]*?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*Max/i,
+  CH4: /Methane\s*\(?CH4\)?[\s\S]*?(?:IS\s+\d+|ASTM\s+D\s*\d+|IEC\s+\d+|ppm\s+v\/v)[\s\S]*?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*Max/i,
+  C2H2:/Acetylene\s*\(?C2H2\)?[\s\S]*?(?:IS\s+\d+|ASTM\s+D\s*\d+|IEC\s+\d+|ppm\s+v\/v)[\s\S]*?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*Max/i,
+  C2H4:/Ethylene\s*\(?C2H4\)?[\s\S]*?(?:IS\s+\d+|ASTM\s+D\s*\d+|IEC\s+\d+|ppm\s+v\/v)[\s\S]*?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*Max/i,
+  C2H6:/Ethane\s*\(?C2H6\)?[\s\S]*?(?:IS\s+\d+|ASTM\s+D\s*\d+|IEC\s+\d+|ppm\s+v\/v)[\s\S]*?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*Max/i,
+  CO:  /Carbon\s+Monoxide\s*\(?CO\)?(?!\s*2)[\s\S]*?(?:IS\s+\d+|ASTM\s+D\s*\d+|IEC\s+\d+|ppm\s+v\/v)[\s\S]*?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*Max/i,
+  CO2: /Carbon\s+Dioxide\s*\(?CO2\)?[\s\S]*?(?:IS\s+\d+|ASTM\s+D\s*\d+|IEC\s+\d+|ppm\s+v\/v)[\s\S]*?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*Max/i,
+  O2:  /Oxygen\s*\(?O2\)?[\s\S]*?(?:IS\s+\d+|ASTM\s+D\s*\d+|IEC\s+\d+|ppm\s+v\/v)[\s\S]*?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*Max/i,
+  N2:  /Nitrogen\s*\(?N2\)?[\s\S]*?(?:IS\s+\d+|ASTM\s+D\s*\d+|IEC\s+\d+|ppm\s+v\/v)[\s\S]*?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*Max/i,
+};
+
+function extractData(text, fname) {
+  const r = {
+    name: fname,
+    ppm: null, limit: null, trufil_verdict: 'ND',
+    equipment:'—', voltage_kv:null, rating:'—',
+    report_no:'—', report_date:'—', sampling_point:'—',
+    fluid_type:'—', limit_std:'—',
+    owner:'—', location:'—',
+    gases:{}, tdcg:null, bdv:null, ift:null, ddf:null, acidity:null,
+    extraction_method:'not_found',
+  };
+
+  let m;
+  if ((m = RX.EQUIP.exec(text)))    r.equipment      = m[1].trim();
+  if ((m = RX.VOLTAGE.exec(text)))  r.voltage_kv     = parseFloat(m[1]);
+  if ((m = RX.RATING.exec(text)))   r.rating         = m[1].trim();
+  if ((m = RX.REPORT.exec(text)))   r.report_no      = m[1].trim();
+  if ((m = RX.DATE.exec(text)))     r.report_date    = m[1];
+  if ((m = RX.POINT.exec(text)))    r.sampling_point = m[1].trim();
+  if ((m = RX.FLUID.exec(text)))    r.fluid_type     = m[1].trim();
+  if ((m = RX.LIMSTD.exec(text)))   r.limit_std      = m[1].trim();
+  if ((m = RX.OWNER.exec(text)))    r.owner          = m[1].trim();
+  if ((m = RX.LOCATION.exec(text))) r.location       = m[1].trim();
+
+  // Water content — 4 strategies
+  if ((m = RX.FULL.exec(text))) {
+    r.ppm = parseFloat(m[1]); r.limit = parseFloat(m[2]);
+    r.trufil_verdict = m[3].trim(); r.extraction_method = 'full_row';
+  } else if ((m = RX.PRIMARY.exec(text))) {
+    r.ppm = parseFloat(m[1]); r.extraction_method = 'primary';
+  } else if ((m = RX.SPLIT.exec(text))) {
+    r.ppm = parseFloat(m[1]); r.extraction_method = 'split_label';
+  } else if ((m = RX.NO_STD.exec(text))) {
+    r.ppm = parseFloat(m[1]); r.limit = parseFloat(m[2]);
+    r.trufil_verdict = m[3].trim(); r.extraction_method = 'no_std_full';
+  }
+
+  // Gases
+  for (const [gas, rx] of Object.entries(GAS_RX)) {
+    if ((m = rx.exec(text))) {
+      r.gases[gas] = { value: parseFloat(m[1]), limit: parseFloat(m[2]) };
+    }
+  }
+
+  // Physical tests
+  if ((m = RX.BDV.exec(text)))     r.bdv     = { value:parseFloat(m[1]), limit:parseFloat(m[2]) };
+  if ((m = RX.IFT.exec(text)))     r.ift     = { value:parseFloat(m[1]), limit:parseFloat(m[2]) };
+  if ((m = RX.DDF.exec(text)))     r.ddf     = { value:parseFloat(m[1]), limit:parseFloat(m[2]) };
+  if ((m = RX.ACIDITY.exec(text))) r.acidity = { value:parseFloat(m[1]), limit:parseFloat(m[2]) };
+  if ((m = RX.TDCG.exec(text)))    r.tdcg    = parseFloat(m[1]);
+
+  return r;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Classification
+// ═══════════════════════════════════════════════════════════════════
+function is1866Limit(kv) {
+  const lbl = (kv != null && kv < 220) ? `<220 kV, ${kv.toFixed(0)} kV` : kv ? '≥220 kV' : 'unknown kV';
+  return { reject:40, basis:`IS 1866:2017 Table-5 (${lbl})` };
+}
+
+function classify(r) {
+  const fluidUp = (r.fluid_type||'').toUpperCase();
+  const stdUp   = (r.limit_std||'').toUpperCase();
+  const isEster = fluidUp.includes('ESTER') || stdUp.includes('IEEE');
+  let reject, basis;
+  if (isEster && r.limit) {
+    reject = r.limit; basis = `${r.limit_std} (Ester) — PDF limit ${reject} ppm`;
+  } else if (r.limit && !isEster) {
+    reject = r.limit; basis = `${r.limit_std||'PDF'} — limit ${reject} ppm`;
+  } else {
+    const l = is1866Limit(r.voltage_kv); reject = l.reject; basis = l.basis;
+  }
+  r.reject = reject; r.basis = basis;
+  if (r.ppm === null) { r.verdict='ND'; return; }
+  r.verdict = r.ppm <= reject ? 'ACCEPTABLE' : 'UNACCEPTABLE';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Analysis text
+// ═══════════════════════════════════════════════════════════════════
+function analysisText(r) {
+  const kv = r.voltage_kv ? `${r.voltage_kv.toFixed(0)} kV` : 'unknown voltage class';
+  if (r.ppm === null) return 'Water content by Karl Fischer method was <strong>not found</strong> in this PDF. Verify the source document format.';
+  if (r.verdict==='ACCEPTABLE')
+    return `At <strong>${r.ppm.toFixed(1)} ppm</strong>, moisture is within the acceptable limit (≤ ${r.reject} ppm). No corrective action required. Continue routine monitoring.`;
+  return `At <strong>${r.ppm.toFixed(1)} ppm</strong>, moisture exceeds the limit (${r.reject} ppm) for ${kv}. <br><strong>Immediate actions:</strong> (1) Vacuum dehydration / filtration — target well below ${r.reject} ppm post-treatment. (2) Inspect breather / conservator seal for integrity failure. (3) Verify BDV before continued operation at rated load. (4) Assess remaining insulation life if paper moisture is suspected.`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Groq AI
+// ═══════════════════════════════════════════════════════════════════
+async function groqAnalyse(r, key) {
+  const kv = r.voltage_kv ? `${r.voltage_kv.toFixed(0)} kV` : 'unknown';
+  const prompt = `You are a transformer oil condition monitoring expert. Analyse this moisture result:
+
+Equipment: ${r.equipment}
+Sampling Point: ${r.sampling_point}
+Voltage Class: ${kv}
+Insulating Fluid: ${r.fluid_type||'Mineral Oil'}
+Water Content (Karl Fischer): ${r.ppm.toFixed(1)} ppm
+Applicable Standard: ${r.limit_std||'IS 1866:2017'}
+Vendor Verdict (TRU-FIL): ${r.trufil_verdict}
+
+Provide a concise expert assessment covering:
+1. Moisture status and risk to insulation system (paper + oil)
+2. Likely root causes if elevated
+3. Specific remediation steps with priority
+4. Monitoring / follow-up recommendation
+
+Keep it technically precise, 150-200 words, no bullet headers, flowing prose.`;
+
+  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+    body: JSON.stringify({
+      model:'llama-3.3-70b-versatile',
+      messages:[{role:'user',content:prompt}],
+      max_tokens:350, temperature:0.3,
+    })
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error?.message || 'Groq API error');
+  return data.choices[0].message.content.trim();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// HTML builders
+// ═══════════════════════════════════════════════════════════════════
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function gasCardHtml(gas, data) {
+  const ref   = data.limit || GAS_LIMITS[gas] || null;
+  const pct   = ref ? Math.min(data.value/ref*100,100) : 50;
+  const cls   = !ref ? 'gc-na' : data.value>=ref ? 'gc-bad' : data.value>=ref*.7 ? 'gc-warn' : 'gc-ok';
+  const col   = {'gc-ok':'#22c55e','gc-warn':'#f59e0b','gc-bad':'#ef4444','gc-na':'#475569'}[cls];
+  const lim   = ref ? `Limit: ${ref}` : 'No ref';
+  return `<div class="gas-card ${cls}">
+    <div class="gas-name">${GAS_LABELS[gas]||gas} <span style="opacity:.5;font-size:.6rem;">(${gas})</span></div>
+    <div class="gas-row">
+      <span class="gas-val">${data.value.toFixed(1)}</span>
+      <span class="gas-unit">ppm v/v</span>
+      <span class="gas-limit">${lim}</span>
+    </div>
+    <div class="gas-bar-track">
+      <div class="gas-bar-fill" style="width:${pct.toFixed(1)}%;background:${col};"></div>
+    </div>
+  </div>`;
+}
+
+function extraCell(label, obj, unit, lowerBetter) {
+  if (!obj) return `<div class="ecell ec-na"><div class="ecell-lbl">${label}</div><div class="ecell-val">—</div></div>`;
+  const ok = lowerBetter ? obj.value<=obj.limit : obj.value>=obj.limit;
+  const cls = ok?'ec-ok':'ec-bad';
+  return `<div class="ecell ${cls}">
+    <div class="ecell-lbl">${label}</div>
+    <div class="ecell-val">${obj.value.toFixed(2)} <span class="ecell-unit">${unit}</span></div>
+    <div class="ecell-sub">Limit: ${obj.limit} ${unit}</div>
+  </div>`;
+}
+
+function buildCard(r, groqKey) {
+  const isOk  = r.verdict==='ACCEPTABLE';
+  const isND  = r.verdict==='ND';
+  const ppmD  = r.ppm!=null ? r.ppm.toFixed(1) : 'N/D';
+  const kv    = r.voltage_kv ? `${r.voltage_kv.toFixed(0)} kV` : '—';
+  const pct   = (r.ppm && r.reject) ? Math.min(r.ppm/r.reject*100,100) : 0;
+  const vsC   = isND?'vs-nd':isOk?'vs-good':'vs-bad';
+  const icon  = isND?'⚪':isOk?'🟢':'🔴';
+  const tfC   = r.trufil_verdict==='Acceptable'?'#4ade80':r.trufil_verdict==='Not Acceptable'?'#f87171':'#94a3b8';
+  const barGrad = isOk ? 'linear-gradient(90deg,#15803d,#22c55e)' : 'linear-gradient(90deg,#991b1b,#ef4444)';
+  const abC   = isND?'ab-nd':isOk?'ab-good':'ab-bad';
+
+  // Gas section
+  const gasOrder = ['H2','C2H2','C2H4','CH4','C2H6','CO','CO2','O2','N2'];
+  const gasKeys  = [...gasOrder.filter(g=>r.gases[g]), ...Object.keys(r.gases).filter(g=>!gasOrder.includes(g))];
+  const gasHtml  = gasKeys.length
+    ? `<div class="slabel">🧪 Dissolved Gas Analysis (DGA)</div>
+       <div class="gas-grid">${gasKeys.map(g=>gasCardHtml(g,r.gases[g])).join('')}</div>
+       ${r.tdcg ? (() => {
+         const c=r.tdcg>720?'#ef4444':r.tdcg>314?'#f59e0b':'#22c55e';
+         return `<div class="tdcg-pill"><span class="tdcg-val" style="color:${c};">${r.tdcg.toFixed(0)} ppm</span>
+           <span style="font-size:.72rem;color:#94a3b8;">TDCG</span>
+           <span class="tdcg-ref">IEEE C57.104 L1&lt;314 · L2&lt;720 · L3&lt;1920</span></div>`;
+       })() : ''}`
+    : `<div style="font-size:.75rem;color:#475569;font-style:italic;margin:.4rem 0 .8rem;">ℹ️ No DGA gas values detected in this PDF.</div>`;
+
+  const hasExtra = r.bdv||r.ift||r.ddf||r.acidity;
+  const extraHtml = hasExtra
+    ? `<div class="slabel">⚗️ Physical &amp; Chemical Tests</div>
+       <div class="extra-grid">
+         ${extraCell('BDV',r.bdv,'kV',false)}
+         ${extraCell('IFT',r.ift,'mN/m',false)}
+         ${extraCell('DDF (90°C)',r.ddf,'%',true)}
+         ${extraCell('Acidity',r.acidity,'mg KOH/g',true)}
+       </div>` : '';
+
+  const aiSlotId = `ai-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  return `
+<div class="report-card" id="card-${aiSlotId}">
+  <div class="card-header open" onclick="toggleCard('body-${aiSlotId}',this)">
+    <span class="ch-icon">${icon}</span>
+    <div style="flex:1;min-width:0;">
+      <div class="ch-equip">${esc(r.equipment)}</div>
+      <div class="ch-meta">${esc(r.sampling_point)} &nbsp;·&nbsp; ${kv} &nbsp;·&nbsp; ${esc(r.name)}</div>
+    </div>
+    <span class="ch-ppm" style="color:${isOk?'#4ade80':isND?'#94a3b8':'#f87171'};">${ppmD} ppm</span>
+    <span class="ch-arrow open">▼</span>
+  </div>
+  <div class="card-body open" id="body-${aiSlotId}">
+
+    <!-- Verdict strip -->
+    <div class="verdict-strip ${vsC}">
+      <div>
+        <div><span class="vs-big">${ppmD}</span><span class="vs-unit">ppm H₂O</span></div>
+        <div class="vs-sub">Limit ${r.reject||40} ppm &nbsp;·&nbsp; ${kv} &nbsp;·&nbsp; ${esc(r.fluid_type||'Mineral Oil')}</div>
+      </div>
+      <div class="vs-verdict">
+        <div class="vs-code">${icon} ${r.verdict}</div>
+        <div class="vs-trufil">TRU-FIL: <span style="color:${tfC};font-weight:700;">${esc(r.trufil_verdict)}</span></div>
+      </div>
+    </div>
+
+    <!-- Water bar -->
+    ${r.ppm!=null ? `
+    <div class="wbar-wrap">
+      <div class="wbar-labels"><span>0 ppm</span><span>${r.reject||40} ppm limit</span></div>
+      <div class="wbar-track">
+        <div class="wbar-fill" style="width:${pct.toFixed(1)}%;background:${barGrad};"></div>
+      </div>
+      <div class="wbar-pct"><strong>${pct.toFixed(1)}%</strong> of limit</div>
+    </div>` : ''}
+
+    <!-- Analysis -->
+    <div class="analysis-box ${abC}">${analysisText(r)}</div>
+
+    <!-- DGA -->
+    ${gasHtml}
+
+    <!-- Extra tests -->
+    ${extraHtml}
+
+    <!-- Verdict & Basis -->
+    <div class="slabel">📋 Verdict &amp; Assessment Basis</div>
+    <div class="two-col">
+      <div class="info-pill">
+        <div class="ip-lbl">TRU-FIL PDF Verdict</div>
+        <div class="ip-val" style="color:${tfC};">${esc(r.trufil_verdict)}</div>
+        <div class="ip-sub">${r.limit ? `Stated limit: ${r.limit} ppm` : 'Stated limit: —'}</div>
+      </div>
+      <div class="info-pill">
+        <div class="ip-lbl">Assessment Basis</div>
+        <div class="ip-val" style="font-size:.82rem;color:#e2e8f0;">${esc(r.basis)}</div>
+      </div>
+    </div>
+
+    <!-- Metadata -->
+    <div class="slabel">🔧 Equipment &amp; Report Details</div>
+    <div class="meta-grid">
+      <div class="mcell"><div class="mcell-lbl">Report No.</div><div class="mcell-val">${esc(r.report_no)}</div></div>
+      <div class="mcell"><div class="mcell-lbl">Report Date</div><div class="mcell-val">${esc(r.report_date)}</div></div>
+      <div class="mcell"><div class="mcell-lbl">Voltage Class</div><div class="mcell-val">${kv}</div></div>
+      <div class="mcell"><div class="mcell-lbl">Rating</div><div class="mcell-val">${esc(r.rating)}</div></div>
+      <div class="mcell span2"><div class="mcell-lbl">Equipment Designation</div><div class="mcell-val">${esc(r.equipment)}</div></div>
+      <div class="mcell"><div class="mcell-lbl">Insulating Fluid</div><div class="mcell-val">${esc(r.fluid_type)}</div></div>
+      <div class="mcell"><div class="mcell-lbl">Limit Standard</div><div class="mcell-val">${esc(r.limit_std)}</div></div>
+      <div class="mcell"><div class="mcell-lbl">Owner</div><div class="mcell-val">${esc(r.owner)}</div></div>
+      <div class="mcell"><div class="mcell-lbl">Location / Station</div><div class="mcell-val">${esc(r.location)}</div></div>
+      <div class="mcell"><div class="mcell-lbl">Extraction Method</div><div class="mcell-val">${esc(r.extraction_method)}</div></div>
+      <div class="mcell span1"><div class="mcell-lbl">Sampling Point</div><div class="mcell-val">${esc(r.sampling_point)}</div></div>
+    </div>
+
+    <!-- AI -->
+    ${r.ppm!=null ? `
+    <div id="${aiSlotId}">
+      ${groqKey
+        ? `<div class="ai-panel"><div class="ai-hdr">🤖 AI Moisture Assessment — Groq / llama-3.3-70b</div>
+           <div class="ai-loading" id="ai-loading-${aiSlotId}">⚙️ Analysing moisture data…</div>
+           <div class="ai-body" id="ai-text-${aiSlotId}" style="display:none;"></div></div>`
+        : `<div class="ai-hint">🤖 Enter a Groq API key above to enable AI moisture assessment</div>`
+      }
+    </div>` : ''}
+  </div>
+</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Card toggle
+// ═══════════════════════════════════════════════════════════════════
+function toggleCard(bodyId, hdr) {
+  const body  = document.getElementById(bodyId);
+  const arrow = hdr.querySelector('.ch-arrow');
+  if (!body) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  hdr.classList.toggle('open', !isOpen);
+  if (arrow) arrow.classList.toggle('open', !isOpen);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Main analysis runner
+// ═══════════════════════════════════════════════════════════════════
+async function runAnalysis() {
+  if (!files.length) return;
+  const groqKey = document.getElementById('groqKey').value.trim();
+  const progWrap = document.getElementById('progressWrap');
+  const progFill = document.getElementById('progressFill');
+  const progLbl  = document.getElementById('progressLabel');
+  const resEl    = document.getElementById('results');
+  const emptyEl  = document.getElementById('empty-state');
+
+  analyseBtn.disabled = true;
+  progWrap.style.display = 'block';
+  emptyEl.style.display  = 'none';
+  resEl.style.display    = 'none';
+  resEl.innerHTML = '';
+
+  const results = [];
+  for (let i=0; i<files.length; i++) {
+    const f = files[i];
+    progFill.style.width = `${(i/files.length*100).toFixed(0)}%`;
+    progLbl.textContent  = `Extracting ${i+1}/${files.length} — ${f.name}`;
+    try {
+      const text = await extractPdfText(f);
+      const data = extractData(text, f.name);
+      classify(data);
+      results.push(data);
+    } catch(e) {
+      results.push({ name:f.name, ppm:null, verdict:'ND', equipment:'Error', reject:40, basis:'—',
+        trufil_verdict:'ERR', sampling_point:'—', fluid_type:'—', limit_std:'—',
+        report_no:'—', report_date:'—', voltage_kv:null, rating:'—',
+        owner:'—', location:'—', gases:{}, tdcg:null, bdv:null, ift:null, ddf:null, acidity:null,
+        extraction_method:`error: ${e.message}` });
+    }
+  }
+  progFill.style.width = '100%';
+  progLbl.textContent  = `Done — ${results.length} report(s) processed`;
+
+  // Sort: UNACCEPTABLE first
+  const order = {UNACCEPTABLE:0, ACCEPTABLE:1, ND:2};
+  results.sort((a,b)=>(order[a.verdict]||9)-(order[b.verdict]||9)||a.name.localeCompare(b.name));
+
+  // Summary
+  const nTotal = results.length;
+  const nBad   = results.filter(r=>r.verdict==='UNACCEPTABLE').length;
+  const nOk    = results.filter(r=>r.verdict==='ACCEPTABLE').length;
+  const nND    = results.filter(r=>r.verdict==='ND').length;
+
+  let html = `
+<div class="summary-grid">
+  <div class="scard sc-total"><div class="scard-num">${nTotal}</div><div class="scard-lbl">📋 Total PDFs</div></div>
+  <div class="scard sc-bad"><div class="scard-num">${nBad}</div><div class="scard-lbl">❌ Unacceptable</div></div>
+  <div class="scard sc-good"><div class="scard-num">${nOk}</div><div class="scard-lbl">✅ Acceptable</div></div>
+  ${nND?`<div class="scard sc-nd"><div class="scard-num">${nND}</div><div class="scard-lbl">⚪ Not Detected</div></div>`:''}
+</div>`;
+
+  // Tier headers + cards
+  const tiers = [
+    {verdict:'UNACCEPTABLE', label:'Unacceptable — Exceeds 40 ppm', cls:'tier-bad'},
+    {verdict:'ACCEPTABLE',   label:'Acceptable — Within safe range (≤ 40 ppm)', cls:'tier-good'},
+    {verdict:'ND',           label:'Not Detected', cls:'tier-nd'},
+  ];
+  for (const t of tiers) {
+    const grp = results.filter(r=>r.verdict===t.verdict);
+    if (!grp.length) continue;
+    html += `<div class="tier-hdr ${t.cls}">
+      <span>${t.verdict==='UNACCEPTABLE'?'🔴':t.verdict==='ACCEPTABLE'?'🟢':'⚪'}</span>
+      <span>${t.label}</span>
+      <span class="tier-count">${grp.length}</span>
+    </div>`;
+    for (const r of grp) html += buildCard(r, groqKey);
+  }
+
+  // Reference box
+  html += `
+<div class="ref-box">
+  <div class="ref-title">📐 Threshold Reference — IS 1866 : 2017 / IEC 60422</div>
+  <div class="ref-row"><span class="ref-lbl">≤ 40 ppm</span><span style="color:#4ade80;font-weight:700;">✅ Acceptable</span><span style="color:#64748b;"> — no action required</span></div>
+  <div class="ref-row"><span class="ref-lbl">&gt; 40 ppm</span><span style="color:#f87171;font-weight:700;">❌ Unacceptable</span><span style="color:#64748b;"> — immediate filtration / replacement</span></div>
+  <div class="ref-dga">
+    <span>H₂ &lt; 100 ppm</span><span>CH₄ &lt; 120 ppm</span>
+    <span>C₂H₂ &lt; 35 ppm</span><span>C₂H₄ &lt; 50 ppm</span>
+    <span>C₂H₆ &lt; 65 ppm</span><span>CO &lt; 350 ppm</span>
+    <span>CO₂ &lt; 2500 ppm</span><span>TDCG L1 &lt; 314 ppm</span>
+  </div>
+  <div class="ref-note">Method: Karl Fischer titration · IS 13567 / ASTM D1533 / IEC 60814 · Units: mg/kg (ppm by weight)</div>
+</div>`;
+
+  resEl.innerHTML = html;
+  resEl.style.display = 'block';
+  analyseBtn.disabled = false;
+
+  setTimeout(()=>{ progWrap.style.display='none'; }, 1500);
+
+  // AI calls (async, fill in after render)
+  if (groqKey) {
+    for (const r of results.filter(x=>x.ppm!=null)) {
+      // find the AI slot for this card by data attribute — use name match
+      const slots = document.querySelectorAll('[id^="ai-loading-"]');
+      for (const slot of slots) {
+        const slotId = slot.id.replace('ai-loading-','');
+        const textEl = document.getElementById(`ai-text-${slotId}`);
+        const cardEl = document.getElementById(`card-${slotId}`);
+        if (!cardEl) continue;
+        const equip = cardEl.querySelector('.ch-equip')?.textContent||'';
+        if (equip !== r.equipment && r.name && !cardEl.innerHTML.includes(esc(r.name))) continue;
+        if (slot.dataset.done) continue;
+        slot.dataset.done = '1';
+        try {
+          const aiText = await groqAnalyse(r, groqKey);
+          slot.style.display = 'none';
+          if (textEl) { textEl.textContent = aiText; textEl.style.display='block'; }
+        } catch(e) {
+          slot.textContent = `AI unavailable: ${e.message}`;
+        }
+        break;
+      }
+    }
+  }
+}
+</script>
+</body>
+</html>
